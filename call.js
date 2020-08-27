@@ -1,4 +1,27 @@
 JsSIP.debug.enable('JsSIP:*');
+
+let configuration = {
+    pcConfig: {
+        iceServers: [
+            {urls: 'stun:stun.freeswitch.org'},
+            {
+                urls: 'turn:185.231.155.241',
+                credential: "123456",
+                username: 'enot1'
+            }
+        ]
+    },
+    mediaConstraints: {
+        audio: true, // only audio calls
+        video: false
+    },
+    rtcOfferConstraints: {
+        offerToReceiveAudio: true, // Принимаем только аудио
+        offerToReceiveVideo: false
+    }
+};
+
+
 function loadPage() {
     console.log('on loadPage');
 
@@ -33,18 +56,18 @@ function login() {
 
     // соединяемся с freeswitch
     this._ua.on('connecting', () => {
-        console.log("UA connecting");
+        console.warn("UA connecting");
     });
 
     // соединились с freeswitch
     this._ua.on('connected', () => {
-        console.log("UA connected");
+        console.warn("UA connected");
     });
 
     // freeswitch нас зарегал, теперь можно звонить и принимать звонки
     this._ua.on('registered', () => {
 
-        console.log("UA registered");
+        console.warn("UA registered");
 
         this.loginButton.addClass('d-none');
         this.logOutButton.removeClass('d-none');
@@ -56,7 +79,7 @@ function login() {
 
     // freeswitch про нас больше не знает
     this._ua.on('unregistered', () => {
-        console.log("UA unregistered");
+        console.warn("UA unregistered");
     });
 
     // freeswitch не зарегал нас, что то не то, скорее всего неверный логин или пароль
@@ -67,32 +90,13 @@ function login() {
     // заводим шарманку
     this._ua.start();
 
-    var configuration = {
-        pcConfig: {
-            iceServers: [
-		    { urls: 'stun:stun.freeswitch.org'},
-		    {
-                    urls: 'turn:185.231.155.241',
-                    credential: "123456",
-                    username: 'enot1'
-                }
-            ]
-        },
-        mediaConstraints: {
-            audio: true, // only audio calls
-            video: false
-        },
-        rtcOfferConstraints: {
-            offerToReceiveAudio: true, // Принимаем только аудио
-            offerToReceiveVideo: false
-        }
-    };
 
-    var callOptions = {
+
+    let callOptions = {
         pcConfig: {
             iceServers: [
-		    { urls: 'stun:stun.freeswitch.org'},
-		    {
+                {urls: 'stun:stun.freeswitch.org'},
+                {
                     urls: 'turn:185.231.155.241',
                     credential: "123456",
                     username: 'enot1'
@@ -114,34 +118,34 @@ function login() {
             session.on("accepted", function () {
                 console.log('accepted');
                 // the call has answered
-               $('#callNumberButton').addClass('d-none');
-               $('#hangUpButton').removeClass('d-none');
-	    });
+                $('#callNumberButton').addClass('d-none');
+                $('#hangUpButton').removeClass('d-none');
+            });
             session.on("confirmed", function (e) {
                 console.log('confirmed');
                 // this handler will be called for incoming calls too
 //                let remoteAudioControl = document.getElementById("remoteAudio");
 //                remoteAudioControl.srcObject = this.session.connection.getRemoteStreams()[0];
-	    });
+            });
             session.on("ended", function () {
                 console.log('ended')
                 // the call has ended
-               $('#callNumberButton').removeClass('d-none');
-               $('#hangUpButton').addClass('d-none');
+                $('#callNumberButton').removeClass('d-none');
+                $('#hangUpButton').addClass('d-none');
 
-	    });
+            });
             session.on("failed", function () {
                 console.log('failed')
                 // unable to establish the call
-               $('#callNumberButton').removeClass('d-none');
-               $('#hangUpButton').addClass('d-none');
-	    });
+                $('#callNumberButton').removeClass('d-none');
+                $('#hangUpButton').addClass('d-none');
+            });
 
             // Answer call
             session.answer(configuration);
             session.connection.ontrack = function (e) {
                 console.log('addstream(track) REMOTE');
-				console.dir(e);
+                console.dir(e);
                 // set remote audio stream (to listen to remote audio)
                 // remoteAudio is <audio> element on page
                 let remoteAudioControl = document.getElementById("remoteAudio");
@@ -152,7 +156,7 @@ function login() {
 
             // Reject call (or hang up it)
             //session.terminate();
-	    session._ua._data.session = session;
+            session._ua._data.session = session;
         }
     });
 
@@ -181,29 +185,7 @@ function call() {
 
     // Делаем ИСХОДЯЩИЙ звонок
     // Принимать звонки этот код не умеет!
-    this.session = this._ua.call(number, {
-        pcConfig: {
-            hackStripTcp: true, // Важно для хрома, чтоб он не тупил при звонке
-            //rtcpMuxPolicy: 'negotiate', // Важно для хрома, чтоб работал multiplexing. Эту штуку обязательно нужно включить на астере.
-
-            iceServers: [
-		    { urls: 'stun:stun.freeswitch.org'},
-		    {
-                    urls: 'turn:185.231.155.241',
-                    credential: "123456",
-                    username: 'enot1'
-                }
-            ]
-        },
-        mediaConstraints: {
-            audio: true, // Поддерживаем только аудио
-            video: false
-        },
-        rtcOfferConstraints: {
-            offerToReceiveAudio: 1, // Принимаем только аудио
-            offerToReceiveVideo: 0
-        }
-    });
+    this.session = this._ua.call(number, configuration);
 
     // Это нужно для входящего звонка, пока не используем
     this._ua.on('newRTCSession', (data) => {
@@ -269,8 +251,8 @@ function call() {
         console.log("UA session accepted");
         stopSound("one-day.mp3");
         playSound("answered.mp3", false);
-	let remoteAudioControl = document.getElementById("remoteAudio");
-	remoteAudioControl.srcObject = this.session.connection.getRemoteStreams()[0];
+        let remoteAudioControl = document.getElementById("remoteAudio");
+        remoteAudioControl.srcObject = this.session.connection.getRemoteStreams()[0];
     });
 }
 
@@ -283,7 +265,7 @@ function playSound(soundName, loop) {
     this._soundsControl.pause();
     this._soundsControl.currentTime = 0.0;
     this._soundsControl.src = "sounds/" + soundName
-        this._soundsControl.loop = loop;
+    this._soundsControl.loop = loop;
     this._soundsControl.play();
 }
 
