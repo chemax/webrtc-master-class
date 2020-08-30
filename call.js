@@ -1,21 +1,26 @@
-JsSIP.debug.enable('JsSIP:*');
+JsSIP.debug.enable('JsSIP:*'); //Включаем полный дебаг, хотя он, кажется, включен по дефолту.
+const domain = document.domain //Определяем domain имя, которое мы будем использовать для подключения к wss freeswitch.
+// У меня всё на одном сервере, вам никто не мешает сделать иначе.
 
-let configuration = {
+let configuration = { //Конфигурация.
     pcConfig: {
         iceServers: [
-            {urls: 'stun:stun.freeswitch.org'},
-            {
+            {urls: 'stun:stun.freeswitch.org'}, //Задаем stun, можно любой бесплатный, у гугла их целый выводок
+            {//Задаем TURN, вот его лучше иметь свой. Иначе, могут быть проблемы. Никто не будет ваш трафик гонять бесплатно и качественно. Или, хотя бы сколько-нибудь долго.
                 urls: 'turn:185.231.155.241',
                 credential: "123456",
                 username: 'enot1'
             }
         ]
     },
-    mediaConstraints: {
-        audio: true, // only audio calls
+    /*
+    * navigator.mediaDevices.getUserMedia() принимает набор mediaConstraints, указывающих, к каким именно устройствам мы хотим получить доступ.
+    */
+    mediaConstraints: { // https://www.rtcmulticonnection.org/docs/mediaConstraints/
+        audio: true, // Принимает только аудио.
         video: false
-    },
-    rtcOfferConstraints: {
+    }
+    ,    rtcOfferConstraints: { // https://jssip.net/documentation/3.4.x/api/session/ как я понял, отвечает за реинвайты
         offerToReceiveAudio: true, // Принимаем только аудио
         offerToReceiveVideo: false
     }
@@ -44,9 +49,9 @@ function login() {
     localStorage.setItem("login", this.loginText.val());
     localStorage.setItem("pwd", this.passwordText.val());
 
-    socket = new JsSIP.WebSocketInterface("wss://webrtc.chemax24.ru:7443");
+    socket = new JsSIP.WebSocketInterface(`wss://${domain}:7443`);
     _ua = new JsSIP.UA({
-        uri: "sip:" + this.loginText.val() + "@webrtc.chemax24.ru", //я жёстко прописал домен для логина
+        uri: "sip:" + this.loginText.val() + `@${domain}`, //я жёстко прописал домен для логина
         password: this.passwordText.val(),
         display_name: this.loginText.val(),
         session_timers: false,
@@ -90,25 +95,6 @@ function login() {
     // заводим шарманку
     this._ua.start();
 
-
-
-    let callOptions = {
-        pcConfig: {
-            iceServers: [
-                {urls: 'stun:stun.freeswitch.org'},
-                {
-                    urls: 'turn:185.231.155.241',
-                    credential: "123456",
-                    username: 'enot1'
-                }
-            ]
-        },
-        mediaConstraints: {
-            audio: true, // only audio calls
-            video: false
-        },
-    };
-
     this._ua.on("newRTCSession", function (data) {
         console.log('newRTC Session')
         var session = data.session;
@@ -116,26 +102,24 @@ function login() {
         if (session.direction === "incoming") {
             // incoming call here
             session.on("accepted", function () {
-                console.log('accepted');
+                console.warn('accepted');
                 // the call has answered
                 $('#callNumberButton').addClass('d-none');
                 $('#hangUpButton').removeClass('d-none');
             });
             session.on("confirmed", function (e) {
-                console.log('confirmed');
-                // this handler will be called for incoming calls too
-//                let remoteAudioControl = document.getElementById("remoteAudio");
-//                remoteAudioControl.srcObject = this.session.connection.getRemoteStreams()[0];
+                console.warn('confirmed');
+
             });
             session.on("ended", function () {
-                console.log('ended')
+                console.warn('Call ended')
                 // the call has ended
                 $('#callNumberButton').removeClass('d-none');
                 $('#hangUpButton').addClass('d-none');
 
             });
             session.on("failed", function () {
-                console.log('failed')
+                console.error('session failed')
                 // unable to establish the call
                 $('#callNumberButton').removeClass('d-none');
                 $('#hangUpButton').addClass('d-none');
@@ -147,7 +131,7 @@ function login() {
                 console.log('addstream(track) REMOTE');
                 console.dir(e);
                 // set remote audio stream (to listen to remote audio)
-                // remoteAudio is <audio> element on page
+                // remoteAudioControl is <audio> element on page
                 let remoteAudioControl = document.getElementById("remoteAudio");
                 remoteAudioControl.srcObject = e.streams[0];
                 //remoteAudio.src = window.URL.createObjectURL(e.stream);

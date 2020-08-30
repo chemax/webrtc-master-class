@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="5987509e-81f3-4fcf-addf-98aa5c1b1f1c" name="webrtc1" url="https://webrtc.chemax24.ru">
+        <fileTransfer rootFolder="/var/www/html" accessType="SFTP" host="95.181.155.76" port="22" sshConfigId="98dd636c-d5ce-403a-8bb4-d1b38e988e78" sshConfig="root@95.181.155.76:22 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
