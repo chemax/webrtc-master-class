@@ -1,0 +1,25 @@
+#!/bin/bash
+
+for (( num = 20; num < 100; num++ ))
+do
+cat <<EOF > /etc/freeswitch/directory/default/10$num.xml
+<include>
+  <user id="10$num">
+    <params>
+      <param name="password" value="\$\${default_password}"/>
+      <param name="vm-password" value="10$num"/>
+    </params>
+    <variables>
+      <variable name="toll_allow" value="domestic,international,local"/>
+      <variable name="accountcode" value="10$num"/>
+      <variable name="user_context" value="default"/>
+      <variable name="effective_caller_id_name" value="Extension 10$num"/>
+      <variable name="effective_caller_id_number" value="10$num"/>
+      <variable name="outbound_caller_id_name" value="\$\${outbound_caller_name}"/>
+      <variable name="outbound_caller_id_number" value="\$\${outbound_caller_id}"/>
+      <variable name="callgroup" value="techsupport"/>
+    </variables>
+  </user>
+</include>
+EOF
+done
